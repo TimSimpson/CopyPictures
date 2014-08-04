@@ -40,12 +40,19 @@ public class PictureInfo
         }
     }
 
-    public void PrintVerboseInfo()
+    public void PrintVerboseInfo(PictureInfo other)
     {
+        bool bigger = other != null && (this.Length > other.Length);
+
         Console.WriteLine("\t" + this.FilePath);
         var modTime = File.GetLastWriteTime(this.FilePath);
         var length = new FileInfo(this.FilePath).Length;
-        Console.WriteLine("\t\tSize: " + this.Length);
+        Console.Write("\t\tSize: " + this.Length);
+        if (bigger)
+        {
+            Console.Write("\t\t<-- BIGGER!!!");
+        }
+        Console.WriteLine();
         Console.WriteLine("\t\tDate Taken    : {0:yyy-MM-dd HH:mm:ss}",
                           this.DateTaken);
         Console.WriteLine("\t\tFile Mode Time: {0:yyy-MM-dd HH:mm:ss}",
@@ -60,15 +67,27 @@ public class PictureInfo
 
 }
 
+public enum PictureDuplicateOptions
+{
+    PromptToOverwrite,
+    PromptButNotIfTimesMatchAndDestIsSmaller,
+    CopyWithSlightlyDifferentFileName
+}
+
 public class PictureRepo
 {
     private readonly string dir;
+    private readonly bool dryRun;
+    private readonly PictureDuplicateOptions dupeOptions;
     private readonly ConsoleColor normalColor;
 
-    public PictureRepo(string dir)
+    public PictureRepo(string dir, PictureDuplicateOptions dupeOptions,
+                       bool dryRun)
     {
         this.dir = dir;
+        this.dryRun = dryRun;
         this.normalColor = Console.ForegroundColor;
+        this.dupeOptions = dupeOptions;
     }
 
     public void AddDirectory(string srcDir)
@@ -96,11 +115,15 @@ public class PictureRepo
         var fileName = Path.GetFileName(srcInfo.FilePath);
         var dstFile = dstDir + "\\" + nameTag + "-" + fileName;
 
-        int copyCount = 0;
-        while (File.Exists(dstFile)) {
-            copyCount ++;
-            dstFile = dstDir + "\\Copy" + copyCount + "_"
-                    + nameTag + "-" + fileName;
+        if (this.dupeOptions
+            == PictureDuplicateOptions.CopyWithSlightlyDifferentFileName)
+        {
+            int copyCount = 0;
+            while (File.Exists(dstFile)) {
+                copyCount ++;
+                dstFile = dstDir + "\\Copy" + copyCount + "_"
+                        + nameTag + "-" + fileName;
+            }
         }
         copyFile(srcInfo, dstFile);
     }
@@ -110,11 +133,11 @@ public class PictureRepo
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("We want to copy:");
         Console.ForegroundColor = ConsoleColor.Green;
-        src.PrintVerboseInfo();
+        src.PrintVerboseInfo(dst);
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("\t  -- to --> ");
         Console.ForegroundColor = ConsoleColor.Yellow;
-        dst.PrintVerboseInfo();
+        dst.PrintVerboseInfo(src);
         Console.ForegroundColor = ConsoleColor.Cyan;
 
         if (dst.IsProbablyTheSameAs(src))
@@ -143,8 +166,48 @@ public class PictureRepo
         bool overwrite = false;
         if (File.Exists(dstFile))
         {
+            if (this.dupeOptions != PictureDuplicateOptions.PromptToOverwrite
+                && this.dupeOptions != PictureDuplicateOptions.PromptButNotIfTimesMatchAndDestIsSmaller)
+            {
+                throw new Exception("Bug!");
+            }
             var dstInfo = new PictureInfo(dstFile);
-            if (!chooseToOverwrite(srcInfo, dstInfo))
+            bool summonPrompt = true;
+            if (dupeOptions == PictureDuplicateOptions.PromptButNotIfTimesMatchAndDestIsSmaller)
+            {
+                if (srcInfo.DateTaken == dstInfo.DateTaken)
+                {
+                    if (srcInfo.Length > dstInfo.Length)
+                    {
+                        overwrite = true;
+                        summonPrompt = true;  // TODO: Change back
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("   src is bigger. REPLACING.");
+                        Console.ForegroundColor = normalColor;
+                    }
+                    else if (srcInfo.Length <= dstInfo.Length)
+                    {
+                        overwrite = false;
+                        summonPrompt = false;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        if (srcInfo.Length == dstInfo.Length)
+                        {
+                            Console.WriteLine("                            dest is the SAME SIZE. !! Skipping.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("                            dest is BIGGER?! Skipping.");
+                        }
+
+                        Console.ForegroundColor = normalColor;
+                    }
+                }
+            }
+            if (summonPrompt)
+            {
+                overwrite = chooseToOverwrite(srcInfo, dstInfo);
+            }
+            if (!overwrite)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Skipping.");
@@ -155,6 +218,11 @@ public class PictureRepo
             {
                 overwrite = true;
             }
+        }
+
+        if (dryRun == true)
+        {
+            return;
         }
         File.Copy(srcInfo.FilePath, dstFile, overwrite);
         File.SetLastWriteTime(dstFile, srcInfo.DateTaken);
