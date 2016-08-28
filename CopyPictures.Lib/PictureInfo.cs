@@ -37,30 +37,7 @@ namespace CopyPictures
             }
         }
 
-        /// <summary>
-        /// Given another PictureInfo (another file) prints out details. This
-        /// is used to prompt the user to see if they want to overwrite one
-        /// file or the other.
-        /// </summary>
-        /// <param name="other">The other file.</param>
-        public void PrintVerboseInfo(PictureInfo other)
-        {
-            bool bigger = other != null && (this.Length > other.Length);
-
-            Console.WriteLine("\t" + this.FilePath);
-            var modTime = File.GetLastWriteTime(this.FilePath);
-            var length = new FileInfo(this.FilePath).Length;
-            Console.Write("\t\tSize: " + this.Length);
-            if (bigger)
-            {
-                Console.Write("\t\t<-- BIGGER!!!");
-            }
-            Console.WriteLine();
-            Console.WriteLine("\t\tDate Taken    : {0:yyy-MM-dd HH:mm:ss}",
-                              this.DateTaken);
-            Console.WriteLine("\t\tFile Mode Time: {0:yyy-MM-dd HH:mm:ss}",
-                             this.FileModTime);
-        }
+        
 
         /// <summary>
         /// The heart of the program. Compares to see if one picture is the

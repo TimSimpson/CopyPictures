@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace CopyPictures
@@ -9,16 +10,11 @@ namespace CopyPictures
 public class PictureRepo
 {
     private readonly string dir;
-    private readonly bool dryRun;
-    private readonly PictureDuplicateOptions dupeOptions;
-    private readonly ConsoleColor normalColor;
+    private readonly PictureDuplicateOptions dupeOptions;    
 
-    public PictureRepo(string dir, PictureDuplicateOptions dupeOptions,
-                       bool dryRun)
+    public PictureRepo(string dir, PictureDuplicateOptions dupeOptions)
     {
         this.dir = dir;
-        this.dryRun = dryRun;
-        this.normalColor = Console.ForegroundColor;
         this.dupeOptions = dupeOptions;
     }
 
@@ -27,19 +23,21 @@ public class PictureRepo
     /// the "repo" directory.
     /// </summary>
     /// <param name="srcDir">The directory to add.</param>
-    public void AddDirectory(string srcDir)
+    /// <returns>A list of FileCopyItems representing what to do.</returns>
+    public List<FileCopyItem> AddDirectory(string srcDir, 
+                                           Output output)
     {
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("Iterating " + srcDir + "...");
-        Console.ForegroundColor = normalColor;
+        output.LogDirectoryItr(srcDir);
+        List<FileCopyItem> list = new List<FileCopyItem>();
         foreach (string dir in Directory.GetDirectories(srcDir))
         {
-            AddDirectory(dir);
+            list.AddRange(AddDirectory(dir, output));
         }
         foreach (string file in Directory.GetFiles(srcDir))
         {
-            AddFile(file);
+            list.Add(AddFile(file));
         }
+        return list;
     }
 
     /// <summary>
@@ -47,9 +45,13 @@ public class PictureRepo
     /// filename will be the original filename, prepended with the day and
     /// time the picture was taken. The directory will be the year and month
     /// the picture was taken.
+    ///
+    /// !! May create new directories.
+    /// 
     /// </summary>
     /// <param name="srcFile">File to add.</param>
-    public void AddFile(string srcFile)
+    /// <returns>A file copy item representing the desired action.</returns>
+    public FileCopyItem AddFile(string srcFile)
     {
         var srcInfo = new PictureInfo(srcFile);
 
@@ -69,114 +71,42 @@ public class PictureRepo
                         + nameTag + "-" + fileName;
             }
         }
-        copyFile(srcInfo, dstFile);
+        return createFileCopyItem(srcInfo, dstFile);
     }
-
-    private bool chooseToOverwrite(PictureInfo src, PictureInfo dst)
+    
+    private FileCopyItem createFileCopyItem(PictureInfo srcInfo, string dstFile)
     {
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("We want to copy:");
-        Console.ForegroundColor = ConsoleColor.Green;
-        src.PrintVerboseInfo(dst);
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("\t  -- to --> ");
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        dst.PrintVerboseInfo(src);
-        Console.ForegroundColor = ConsoleColor.Cyan;
+        PictureInfo dstInfo = (File.Exists(dstFile)
+                            ? new PictureInfo(dstFile)
+                            : null);
 
-        if (dst.IsProbablyTheSameAs(src))
+        FileCopyStatus status = FileCopyStatus.DestinationDoesNotExist;
+        if (dstInfo != null)
         {
-            Console.WriteLine("Yet the destination file looks to be the same "
-                              + "already.");
-        }
-        else
-        {
-            Console.WriteLine("But the destination file already exists and "
-                              + "looks different.");
-        }
-        Console.WriteLine("Should we copy and overwrite the file anyway?");
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.Write("(y/n) ");
-        Console.ForegroundColor = normalColor;
-        var yn = Console.ReadLine();
-        return yn == "y";
-    }
-
-    /// <summary>
-    /// Actually copies a picture to a destination file. May prompt if 
-    /// needed.
-    /// </summary>
-    /// <param name="srcInfo">Picture to copy.</param>
-    /// <param name="dstFile">Destination file path.</param>
-    private void copyFile(PictureInfo srcInfo, string dstFile)
-    {
-        Console.WriteLine("  src << " + srcInfo.FilePath);
-        Console.WriteLine("  dst  >> " + dstFile);
-
-        bool overwrite = false;
-        if (File.Exists(dstFile))
-        {
-            if (this.dupeOptions != PictureDuplicateOptions.PromptToOverwrite
-                && this.dupeOptions != PictureDuplicateOptions.PromptButNotIfTimesMatchAndDestIsSmaller)
+            if (srcInfo.DateTaken != dstInfo.DateTaken)
             {
-                throw new Exception("Bug!");
-            }
-            var dstInfo = new PictureInfo(dstFile);
-            bool summonPrompt = true;
-            if (dupeOptions == PictureDuplicateOptions.PromptButNotIfTimesMatchAndDestIsSmaller)
-            {
-                if (srcInfo.DateTaken == dstInfo.DateTaken)
-                {
-                    if (srcInfo.Length > dstInfo.Length)
-                    {
-                        overwrite = true;
-                        summonPrompt = true;  // TODO: Change back
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("   src is bigger. REPLACING.");
-                        Console.ForegroundColor = normalColor;
-                    }
-                    else if (srcInfo.Length <= dstInfo.Length)
-                    {
-                        overwrite = false;
-                        summonPrompt = false;
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        if (srcInfo.Length == dstInfo.Length)
-                        {
-                            Console.WriteLine("                            dest is the SAME SIZE. !! Skipping.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("                            dest is BIGGER?! Skipping.");
-                        }
-
-                        Console.ForegroundColor = normalColor;
-                    }
-                }
-            }
-            if (summonPrompt)
-            {
-                overwrite = chooseToOverwrite(srcInfo, dstInfo);
-            }
-            if (!overwrite)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Skipping.");
-                Console.ForegroundColor = normalColor;
-                return;
+                status = FileCopyStatus.DifferentTimes;
             }
             else
             {
-                overwrite = true;
+                if (srcInfo.Length > dstInfo.Length)
+                {
+                    status = FileCopyStatus.SourceIsBigger;
+                }
+                else if (dstInfo.Length > srcInfo.Length)
+                {
+                    status = FileCopyStatus.DestinationIsBigger;
+                }
+                else
+                {
+                    status = FileCopyStatus.SeeminglyIdentical;
+                }
             }
         }
-
-        if (dryRun == true)
-        {
-            return;
-        }
-        File.Copy(srcInfo.FilePath, dstFile, overwrite);
-        File.SetLastWriteTime(dstFile, srcInfo.DateTaken);
+       return new FileCopyItem(srcInfo, dstFile, dstInfo, status);
     }
+
+    
 
     /// <summary>
     /// Ensures the directory needed to store pics from a given time exists

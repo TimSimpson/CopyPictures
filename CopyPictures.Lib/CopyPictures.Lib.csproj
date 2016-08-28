@@ -43,6 +43,11 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleController.cs" />
+    <Compile Include="FileCopier.cs" />
+    <Compile Include="FileCopyItem.cs" />
+    <Compile Include="FileCopyStatus.cs" />
+    <Compile Include="Output.cs" />
     <Compile Include="PictureRepo.cs" />
     <Compile Include="PictureDuplicateOptions.cs" />
     <Compile Include="PictureInfo.cs" />

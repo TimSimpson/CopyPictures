@@ -87,8 +87,13 @@ replaced at) the destDirectory but directories will still be created.
 
                 if (CheckDir(src) && CheckDir(dest))
                 {
-                    var repo = new PictureRepo(dest, option, dryRun);
-                    repo.AddDirectory(src);
+                    var controller = new ConsoleController();
+                    var repo = new PictureRepo(dest, option);                    
+                    List<FileCopyItem> files = repo.AddDirectory(src, controller);
+
+                    var copier = new FileCopier(dryRun, option, controller, controller);
+                    copier.CopyFiles(files);
+
                     Environment.ExitCode = 0;
                 }
             }
