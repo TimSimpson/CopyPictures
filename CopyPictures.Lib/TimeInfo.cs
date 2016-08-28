@@ -12,17 +12,29 @@ namespace CopyPictures
 public class Optional<T>
 {
     public readonly bool IsSet;
-    public readonly T Value;
+    private readonly T v;
 
     public Optional(T t)
     {
-        Value = t;
+        v = t;
         IsSet = true;
     }
 
     public Optional()
     {
         IsSet = false;
+    }
+
+    public T Value
+    {
+        get
+        {
+            if (IsSet)
+            {
+                return v;
+            }
+            throw new Exception("Optional value not set!");
+        }
     }
 
 }

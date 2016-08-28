@@ -1,78 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 using System.IO;
-using System.Text;
-using System.Windows.Media.Imaging;  // BitmapMetaData
 
 namespace CopyPictures
 {
-
-
-public class PictureInfo
-{
-    public readonly DateTime DateTaken;
-    public readonly string FilePath;
-    public readonly DateTime FileModTime;
-    public readonly long Length;
-
-    public PictureInfo(string filePath)
-    {
-        this.FilePath = filePath;
-        this.FileModTime = File.GetLastWriteTime(this.FilePath);
-        this.Length = new FileInfo(this.FilePath).Length;
-        try
-        {
-            using (var stream = new FileStream(this.FilePath, FileMode.Open,
-                                               FileAccess.Read)
-                  )
-            {
-                BitmapSource bs = BitmapFrame.Create(stream);
-                BitmapMetadata metadata = (BitmapMetadata) bs.Metadata;
-                this.DateTaken = DateTime.Parse(metadata.DateTaken);
-            }
-        }
-        catch(Exception)
-        {
-            this.DateTaken = FileModTime;
-        }
-    }
-
-    public void PrintVerboseInfo(PictureInfo other)
-    {
-        bool bigger = other != null && (this.Length > other.Length);
-
-        Console.WriteLine("\t" + this.FilePath);
-        var modTime = File.GetLastWriteTime(this.FilePath);
-        var length = new FileInfo(this.FilePath).Length;
-        Console.Write("\t\tSize: " + this.Length);
-        if (bigger)
-        {
-            Console.Write("\t\t<-- BIGGER!!!");
-        }
-        Console.WriteLine();
-        Console.WriteLine("\t\tDate Taken    : {0:yyy-MM-dd HH:mm:ss}",
-                          this.DateTaken);
-        Console.WriteLine("\t\tFile Mode Time: {0:yyy-MM-dd HH:mm:ss}",
-                         this.FileModTime);
-    }
-
-    public bool IsProbablyTheSameAs(PictureInfo other)
-    {
-        return other.DateTaken == this.DateTaken
-            && other.Length == this.Length;
-    }
-
-}
-
-public enum PictureDuplicateOptions
-{
-    PromptToOverwrite,
-    PromptButNotIfTimesMatchAndDestIsSmaller,
-    CopyWithSlightlyDifferentFileName
-}
-
+/// <summary>
+/// Represents a "repository" of pictures- which is really just a directory.
+/// </summary>
 public class PictureRepo
 {
     private readonly string dir;
@@ -89,6 +22,11 @@ public class PictureRepo
         this.dupeOptions = dupeOptions;
     }
 
+    /// <summary>
+    /// Iterates the given directory, finds all pictures and copies them to 
+    /// the "repo" directory.
+    /// </summary>
+    /// <param name="srcDir">The directory to add.</param>
     public void AddDirectory(string srcDir)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -104,6 +42,13 @@ public class PictureRepo
         }
     }
 
+    /// <summary>
+    /// Given a single file, adds it to the "picture repo" directory. The
+    /// filename will be the original filename, prepended with the day and
+    /// time the picture was taken. The directory will be the year and month
+    /// the picture was taken.
+    /// </summary>
+    /// <param name="srcFile">File to add.</param>
     public void AddFile(string srcFile)
     {
         var srcInfo = new PictureInfo(srcFile);
@@ -157,6 +102,12 @@ public class PictureRepo
         return yn == "y";
     }
 
+    /// <summary>
+    /// Actually copies a picture to a destination file. May prompt if 
+    /// needed.
+    /// </summary>
+    /// <param name="srcInfo">Picture to copy.</param>
+    /// <param name="dstFile">Destination file path.</param>
     private void copyFile(PictureInfo srcInfo, string dstFile)
     {
         Console.WriteLine("  src << " + srcInfo.FilePath);
@@ -227,6 +178,12 @@ public class PictureRepo
         File.SetLastWriteTime(dstFile, srcInfo.DateTaken);
     }
 
+    /// <summary>
+    /// Ensures the directory needed to store pics from a given time exists
+    /// and returns it's path.
+    /// </summary>
+    /// <param name="time">The time (only the year and month are used).</param>
+    /// <returns>Path to the directory.</returns>
     private string findOrCreateDirectory(DateTime time)
     {
         var yearDir = string.Format("{0:yyyy}", time);
