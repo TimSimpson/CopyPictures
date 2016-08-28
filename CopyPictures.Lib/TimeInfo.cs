@@ -1,13 +1,16 @@
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;  // BitmapMetaData
 
 namespace CopyPictures
 {
 
-public class Optional<T> 
-{  
+public class Optional<T>
+{
     public readonly bool IsSet;
     public readonly T Value;
 
@@ -18,10 +21,10 @@ public class Optional<T>
     }
 
     public Optional()
-    {        
+    {
         IsSet = false;
     }
-        
+
 }
 
 public class TimeInfo
@@ -43,6 +46,7 @@ public class TimeInfo
             return new Optional<DateTime>();
         }
     }
+
 
     // http://stackoverflow.com/questions/3104641/how-do-i-find-the-date-a-video-avi-mp4-was-actually-recorded
     public static Optional<DateTime> FindAndroidMp4Time(string filePath)
