@@ -35,7 +35,8 @@ replaced at) the destDirectory but directories will still be created.
 
         static bool CheckDir(string dir)
         {
-            if (!Directory.Exists(dir)) {
+            if (!Directory.Exists(dir))
+            {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.Error.WriteLine("No such directory: " + dir);
                 return false;
@@ -47,11 +48,14 @@ replaced at) the destDirectory but directories will still be created.
         {
             Environment.ExitCode = 1;
             var normal = Console.ForegroundColor;
-            if (args.Length < 3) {
+            if (args.Length < 3)
+            {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("Incorrect arguments.");
+                Console.Error.WriteLine("Incorrect arguments.");                                                       
                 Usage();
-            } else {
+            }
+            else
+            {
                 var optionStr = args[0];
                 var src = args[1];
                 var dest = args[2];
@@ -73,7 +77,7 @@ replaced at) the destDirectory but directories will still be created.
                 PictureDuplicateOptions option = (
                     optionStr == "prompt" ?
                         PictureDuplicateOptions.PromptToOverwrite
-                    :   (optionStr == "promptS" ?
+                    : (optionStr == "promptS" ?
                             PictureDuplicateOptions.PromptButNotIfTimesMatchAndDestIsSmaller
                         :
                             PictureDuplicateOptions.CopyWithSlightlyDifferentFileName
@@ -81,7 +85,8 @@ replaced at) the destDirectory but directories will still be created.
                     );
 
 
-                if (CheckDir(src) && CheckDir(dest)) {
+                if (CheckDir(src) && CheckDir(dest))
+                {
                     var repo = new PictureRepo(dest, option, dryRun);
                     repo.AddDirectory(src);
                     Environment.ExitCode = 0;
