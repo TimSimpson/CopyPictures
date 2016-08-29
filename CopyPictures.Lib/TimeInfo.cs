@@ -72,7 +72,21 @@ public class TimeInfo
                 int year = Int32.Parse(match.Groups[1].Value);
                 int month = Int32.Parse(match.Groups[2].Value);
                 int day = Int32.Parse(match.Groups[3].Value);
-                int hour = Int32.Parse(match.Groups[4].Value);
+                int hour = Int32.Parse(match.Groups[4].Value) - 1;
+                /*if (hour >= 24)
+                {
+                    // No, I have no idea WTF this is necessary.
+                    // Basically I had a ton of pictures which ended up almost
+                    // being duplicated; I'd copied some using the MTP mode
+                    // (USB to Android phone) so the created dates where 
+                    // preserved, but then I started using the Boar VCS, 
+                    // which apparently doesn't give a shit about the created
+                    // date. So at that point I had dozens of duplicates.
+                    // The only way they synced is if I set the hour to what
+                    // appeared in the file name- but the problem then was
+                    // one file was set to 24.
+                    hour = 24;
+                }*/
                 int minute = Int32.Parse(match.Groups[5].Value);
                 int seconds = Int32.Parse(match.Groups[6].Value);
                 int ms = Int32.Parse(match.Groups[7].Value);

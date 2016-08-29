@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace CopyPictures
 {
@@ -59,6 +60,18 @@ public class PictureRepo
 
         var nameTag = string.Format("{0:dd-HH_mm_ss}", srcInfo.DateTaken);
         var fileName = Path.GetFileName(srcInfo.FilePath);
+        // This is a hack to get around a specific case I ran into where
+        // I had copied over some Android pics twice:
+        var pattern = @"VID_([0-9]{1,4})([0-9]{1,2})([0-9]{1,2})_([0-9]{1,2})([0-9]{1,2})([0-9]{1,2})([0-9]{1,3})\.mp4";
+        var match = Regex.Match(fileName, pattern);
+        if (match.Success)
+        {
+            var i = fileName.IndexOf("VID_");
+            fileName = fileName.Substring(i);
+        }
+
+        // end hack!
+
         var dstFile = dstDir + "\\" + nameTag + "-" + fileName;
 
         if (this.dupeOptions
@@ -75,7 +88,7 @@ public class PictureRepo
     }
     
     private FileCopyItem createFileCopyItem(PictureInfo srcInfo, string dstFile)
-    {
+    {        
         PictureInfo dstInfo = (File.Exists(dstFile)
                             ? new PictureInfo(dstFile)
                             : null);
