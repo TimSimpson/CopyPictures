@@ -87,6 +87,23 @@ public class TimeInfo
                     // one file was set to 24.
                     hour = 24;
                 }*/
+                // 2019-01-05: Get ready for another kludge straight from the 
+                // bowels of hell. I know think the filename in Android matches
+                // as far as the day is concerned but the time of day has nothing
+                // to do with it.
+                // Specifically, there was a file named 
+                // "VID_20181130_000118147.mp4" which lead to hours = -1.
+                // Looking at the properties in Windows explorer though the "Media
+                // created" time (the only extended property with a timestamp I
+                // could find) was 2018-11-30 2:01 AM. That doesn't map in any
+                // way to the file name. SO, this is seemingly my only choice.
+                // Thankfully I've found that, in practice, we never care about
+                // exact time of day matching when we browse photos.
+                // It does really bother me though...
+                if (hour < 0)
+                {
+                    hour = 1;
+                }
                 int minute = Int32.Parse(match.Groups[5].Value);
                 int seconds = Int32.Parse(match.Groups[6].Value);
                 int ms = Int32.Parse(match.Groups[7].Value);
