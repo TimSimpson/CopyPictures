@@ -8,7 +8,12 @@ var solution = File("./CopyPictures.sln");
 
 Task("build").Does(() =>
 {
-  MSBuild(solution);
+  var settings = new MSBuildSettings {
+      Configuration = "Debug",
+      // MSIL == "Any CPU"
+      PlatformTarget = PlatformTarget.MSIL
+  };
+  MSBuild(solution, settings);
 });
 
 Task("test")
@@ -33,10 +38,8 @@ Task("test")
     ReportUnit(xunitReport);
   });
 
-var target = Argument("target", "default");
-var configuration = Argument("configuration", "release");
-
 Task("default")
   .IsDependentOn("test");
 
+var target = Argument("target", "default");
 RunTarget(target);

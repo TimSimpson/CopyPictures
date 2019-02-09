@@ -41,8 +41,9 @@ Example:
 Building
 ========
 
-You'll need Windows 8 and .NET 4. Sorry. No Visual Studio necessary, just
-run "msbuild CopyPictures.csproj".
+You'll need Windows 8 and .NET 4, msbuild anc Cake. Then just run "cake".
+
+Or run ``msbuild CopyPictures.sln /p:Configuration=Debug /p:Platform="Any CPU"``.
 
 
 Caveats / Warnings

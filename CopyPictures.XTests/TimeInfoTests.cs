@@ -18,7 +18,7 @@ namespace CopyPictures.XTests
         {
             var time = TimeInfo.FindAndroidMp4Time(@"C:\SomePlace\AnotherPlace\11-19_43_49-VID_20160610_201002853.mp4");
             Assert.True(time.IsSet);
-            Assert.Equal(new DateTime(2016, 6, 10, 20, 10, 2, 853), time.Value);
+            Assert.Equal(new DateTime(2016, 6, 10, 19, 10, 2, 853), time.Value);
         }
 
         [Fact]
