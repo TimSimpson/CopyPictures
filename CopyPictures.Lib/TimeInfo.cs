@@ -60,10 +60,24 @@ public class TimeInfo
     }
 
 
-    // http://stackoverflow.com/questions/3104641/how-do-i-find-the-date-a-video-avi-mp4-was-actually-recorded
     public static Optional<DateTime> FindAndroidMp4Time(string filePath)
     {
         var pattern = @"VID_([0-9]{1,4})([0-9]{1,2})([0-9]{1,2})_([0-9]{1,2})([0-9]{1,2})([0-9]{1,2})([0-9]{1,3})\.mp4";
+        var result =  findAndroidMp4TimeWithPattern(pattern, filePath);
+        if (!result.IsSet) {
+            // In 2021 I got a Pixel phone and found it uses this file name.
+            // The hours are a bit off but the day is correct. If I ever truly
+            // am bothered I could always add a DLL I read about to look
+            // at the "Media Created" attribute.
+            pattern = @"PXL_([0-9]{1,4})([0-9]{1,2})([0-9]{1,2})_([0-9]{1,2})([0-9]{1,2})([0-9]{1,2})([0-9]{1,3})\.mp4";
+            result =  findAndroidMp4TimeWithPattern(pattern, filePath);
+        }
+        return result;
+    }
+
+    // http://stackoverflow.com/questions/3104641/how-do-i-find-the-date-a-video-avi-mp4-was-actually-recorded
+    public static Optional<DateTime> findAndroidMp4TimeWithPattern(string pattern, string filePath)
+    {
         var match = Regex.Match(filePath, pattern);
         if (match.Success)
         {
