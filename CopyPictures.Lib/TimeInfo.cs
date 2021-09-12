@@ -69,7 +69,7 @@ public class TimeInfo
             // The hours are a bit off but the day is correct. If I ever truly
             // am bothered I could always add a DLL I read about to look
             // at the "Media Created" attribute.
-            pattern = @"PXL_([0-9]{1,4})([0-9]{1,2})([0-9]{1,2})_([0-9]{1,2})([0-9]{1,2})([0-9]{1,2})([0-9]{1,3})\.mp4";
+            pattern = @"PXL_([0-9]{1,4})([0-9]{1,2})([0-9]{1,2})_([0-9]{1,2})([0-9]{1,2})([0-9]{1,2})([0-9]{1,3})(([^.]+)|(\.RESTORED))?\.mp4";
             result =  findAndroidMp4TimeWithPattern(pattern, filePath);
         }
         return result;
